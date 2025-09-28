@@ -25,6 +25,7 @@ const nextConfig = {
     ],
   },
   outputFileTracingRoot: import.meta.dirname,
+  output: 'standalone', // Enable standalone output for Docker
   // Otras opciones de configuración aquí
 };
 

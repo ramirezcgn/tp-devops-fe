@@ -16,6 +16,13 @@ FROM node:22-slim AS runner
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
+ENV PORT=3000
+ENV BE_SCHEMA=http
+ENV BE_HOST=devops_be
+ENV BE_PORT=3001
+ENV NEXT_PUBLIC_BE_SCHEMA=http
+ENV NEXT_PUBLIC_BE_HOST=devops_be
+ENV NEXT_PUBLIC_BE_PORT=3001
 
 # Copy built application
 COPY --from=builder /usr/src/app/public ./public

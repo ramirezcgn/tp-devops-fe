@@ -1,33 +1,50 @@
-FROM node:22 AS builder
+FROM node:22-alpine AS base
 
-# Create app directory
-WORKDIR /usr/src/app
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
 
-# Install app dependencies
-COPY package*.json ./
+COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV NEXT_PUBLIC_BE_SCHEMA=http
-ENV NEXT_PUBLIC_BE_HOST=devops_be
-ENV NEXT_PUBLIC_BE_PORT=3001
-
-# Bundle app source and build
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Build the app with environment variables from docker-compose
+# These will be available during build time
+ARG NEXT_PUBLIC_BE_SCHEMA
+ARG NEXT_PUBLIC_BE_HOST
+ARG NEXT_PUBLIC_BE_PORT
+
+ENV NEXT_PUBLIC_BE_SCHEMA=$NEXT_PUBLIC_BE_SCHEMA
+ENV NEXT_PUBLIC_BE_HOST=$NEXT_PUBLIC_BE_HOST
+ENV NEXT_PUBLIC_BE_PORT=$NEXT_PUBLIC_BE_PORT
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npm run build
 
-# Production stage
-FROM node:22-slim AS runner
-WORKDIR /usr/src/app
+# Production image
+FROM base AS runner
+WORKDIR /app
 
-# Copy built application
-COPY --from=builder /usr/src/app/public ./public
-COPY --from=builder /usr/src/app/.next ./.next
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/package.json ./package.json
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+# Default port (can be overridden by docker-compose)
 EXPOSE 3000
+ENV PORT=3000
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

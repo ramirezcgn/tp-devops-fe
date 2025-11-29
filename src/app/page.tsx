@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle } from 'reactstrap';
 import { Todo } from 'types/todo';
-import { TodoForm, TodoList, FeedbackAlert } from 'components';
+import { TodoForm, TodoList, FeedbackAlert, StressTest } from 'components';
 import * as todoService from 'services/todoService';
 
 export default function HomePage() {
@@ -95,6 +95,11 @@ export default function HomePage() {
               />
             </CardBody>
           </Card>
+        </Col>
+      </Row>
+      <Row className="justify-content-center mb-4">
+        <Col md={10} lg={8}>
+          <StressTest />
         </Col>
       </Row>
     </Container>

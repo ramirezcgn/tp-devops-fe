@@ -1,9 +1,17 @@
 import { Todo } from 'types/todo';
 
+// En Kubernetes, usar URL relativa que pasa por NGINX
+// En desarrollo local, usar la URL completa
+const isServer = typeof window === 'undefined';
 const API_SCHEMA = process.env.NEXT_PUBLIC_BE_SCHEMA || 'http';
 const API_HOST = process.env.NEXT_PUBLIC_BE_HOST || 'localhost';
 const API_PORT = process.env.NEXT_PUBLIC_BE_PORT || '3001';
-const API_URL = `${API_SCHEMA}://${API_HOST}:${API_PORT}/api/todos`;
+
+// Si estamos en el navegador, usar ruta relativa (pasa por NGINX en k8s)
+// Si estamos en el servidor (SSR), usar la URL completa del servicio interno
+const API_URL = isServer
+  ? `${API_SCHEMA}://${API_HOST}:${API_PORT}/api/todos`
+  : '/api/todos';
 
 const handleResponse = async (res: Response) => {
   if (!res.ok) {

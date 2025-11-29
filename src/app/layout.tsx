@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import '../styles/app.scss';
 import { ReactNode } from 'react';
+import { TelemetryProvider } from '../components/TelemetryProvider';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="description" content="A simple todo list application" />
       </head>
-      <body>{children}</body>
+      <body>
+        <TelemetryProvider>{children}</TelemetryProvider>
+      </body>
     </html>
   );
 }

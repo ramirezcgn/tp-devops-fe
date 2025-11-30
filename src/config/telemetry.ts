@@ -17,12 +17,33 @@ export function initTelemetry() {
                     ({ ZoneContextManager }) => {
                       // Configuración del exportador OTLP
                       const exporter = new OTLPTraceExporter({
-                        url: '/api/traces', // Usar la ruta API local como proxy
+                        url: '/v1/traces', // Enviar directamente a Jaeger a través de nginx
                       });
 
-                      // Configuración del proveedor de trazas con el span processor
+                      // Crear un SpanProcessor personalizado que modifique el resource
+                      class ServiceNameProcessor {
+                        forceFlush() {
+                          return Promise.resolve();
+                        }
+                        onStart() {}
+                        onEnd(span: any) {
+                          // Modificar el resource del span para incluir service.name
+                          if (span.resource && span.resource.attributes) {
+                            span.resource.attributes['service.name'] =
+                              'devops-fe';
+                          }
+                        }
+                        shutdown() {
+                          return Promise.resolve();
+                        }
+                      }
+
+                      // Configuración del proveedor de trazas
                       const provider = new WebTracerProvider({
-                        spanProcessors: [new BatchSpanProcessor(exporter)],
+                        spanProcessors: [
+                          new ServiceNameProcessor() as any,
+                          new BatchSpanProcessor(exporter),
+                        ],
                       });
 
                       // Registrar el proveedor
@@ -61,8 +82,6 @@ export function initTelemetry() {
                           }),
                         ],
                       });
-
-                      console.log('✅ OpenTelemetry initialized for frontend');
                     },
                   );
                 },
